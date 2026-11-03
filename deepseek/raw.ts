@@ -1,3 +1,5 @@
+import { deepseek_apikey } from '../env.ts'
+
 interface DeepSeekMessage {
 	content: string
 	role: 'system' | 'user' | 'assistant'
@@ -22,6 +24,10 @@ async function deepseek(msg_list: DeepSeekMessage[]): Promise<DeepSeekResult> {
 	// https://api-docs.deepseek.com/zh-cn/api/create-chat-completion
 	const response = await fetch('https://api.deepseek.com/chat/completions', {
 		method: 'POST',
+		headers: {
+			'Authorization': `Bearer ${deepseek_apikey}`,
+			'Content-Type': 'application/json',
+		},
 		body: JSON.stringify({
 			messages: msg_list,
 
