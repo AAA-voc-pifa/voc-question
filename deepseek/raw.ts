@@ -31,7 +31,8 @@ async function deepseek(msg_list: DeepSeekMessage[]): Promise<DeepSeekResult> {
 		body: JSON.stringify({
 			messages: msg_list,
 
-			model: 'deepseek-v4-pro', // 'deepseek-flash', 'deepseek-v4-pro'
+			// model: 'deepseek-v4-pro', // 'deepseek-flash', 'deepseek-v4-pro'
+			model: 'deepseek-flash',
 			thinking: {
 				type: 'enabled',
 			},
@@ -50,7 +51,7 @@ async function deepseek(msg_list: DeepSeekMessage[]): Promise<DeepSeekResult> {
 
 async function check_response(response: Response) {
 	if (response.ok)
-		return true
+		return false
 
 	const err_msg = `请求 deepseek 失败 ${response.status}`
 	try {
@@ -61,5 +62,5 @@ async function check_response(response: Response) {
 		console.error(err_msg, '接收 body 也失败')
 		console.error(err)
 	}
-	return false
+	return true
 }
