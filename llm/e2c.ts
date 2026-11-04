@@ -50,8 +50,10 @@ const prompt = {
 		`请根据英文单词 "${word}" 生成 3 个有意义的句子，并给出中文翻译。`,
 }
 
+type E2CResult = [false, string] | [true, ExampleE2C]
+
 export
-async function e2c(word: string, ds_opts?: DeepSeekOpts) {
+async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
 	const [ok, result] = await deepseek([
 		{ role: 'system', content: prompt.sys },
 		{ role: 'user', content: prompt.user(word) },
@@ -67,5 +69,5 @@ async function e2c(word: string, ds_opts?: DeepSeekOpts) {
 		console.error(data.error)
 		return [false, '生成 e2c - 解析失败: \n' + result.choices[0].message.content]
 	}
-	return data.data
+	return [true, data.data]
 }
