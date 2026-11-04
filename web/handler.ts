@@ -8,9 +8,12 @@ async function http_handler(req: Request): Promise<Response> {
 	const req_str = req.method + ' ' + req.url
 	const now = Date.now()
 	try {
+		if (req.method === 'OPTIONS')
+			return Respond(204, null)
+
 		// 检查密码
 		if (req.headers.get('password') !== http_password)
-			return new Response('password incorrect', { status: 401 })
+			return Respond(401, 'password incorrect')
 		// 处理请求
 		switch(url.pathname) {
 			case '/e2c':
@@ -47,23 +50,32 @@ async function handle_e2c(url: URL) {
 	return unknown_error()
 }
 
+function Respond(status: number, body: string | null, opts?: {
+	json: boolean
+}) {
+	const headers: Record<string, string> = {
+		'Access-Control-Allow-Origin': '*',
+		'Access-Control-Allow-Methods': 'GET, OPTIONS, POST, DELETE, PUT',
+		'Access-Control-Allow-Headers': 'password, Content-Type',
+	}
+	if (opts?.json === true)
+		headers['Content-Type'] = 'application/json'
+	return new Response(body, { status, headers })
+}
+
 function respond_json(data: unknown) {
-	return new Response(JSON.stringify(data), {
-		headers: {
-			'Content-Type': 'application/json',
-		},
+	return Respond(200, JSON.stringify(data), {
+		json: true,
 	})
 }
 
 function respond_400(msg: string) {
-	return new Response('请求异常: ' + msg, {
-		status: 400,
-	})
+	return Respond(400, '请求异常: ' + msg)
 }
 
 function not_found() {
-	return new Response('noT founD', { status: 404 })
+	return Respond(404, 'noT founD')
 }
 function unknown_error() {
-	return new Response('unknowN erroR', { status: 500 })
+	return Respond(500, 'unknowN erroR')
 }
