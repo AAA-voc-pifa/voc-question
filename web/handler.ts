@@ -5,7 +5,7 @@ import { validate_word } from '../util.ts'
 export
 async function http_handler(req: Request): Promise<Response> {
 	const url = new URL(req.url)
-	const req_str = req.method + ' ' + req.url
+	const req_str = req.method + ' ' + url.pathname + url.search
 	const now = Date.now()
 	try {
 		if (req.method === 'OPTIONS')
