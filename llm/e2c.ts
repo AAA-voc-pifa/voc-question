@@ -54,6 +54,7 @@ type E2CResult = [false, string] | [true, ExampleE2C]
 
 export
 async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
+	console.log('生成 e2c...', word)
 	const [ok, result] = await deepseek([
 		{ role: 'system', content: prompt.sys },
 		{ role: 'user', content: prompt.user(word) },
