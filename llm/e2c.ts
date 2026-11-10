@@ -1,7 +1,7 @@
 // English to Chinese
 
 import { z } from '@zod/zod'
-import { deepseek, type DeepSeekOpts } from './deepseek.ts'
+import { deepseek, type DeepSeekOpts, type DeepSeekResponseData } from './deepseek.ts'
 
 const question_e2c_schema = z.object({
 	en: z.string().min(1),
@@ -51,7 +51,10 @@ const prompt = {
 		`英文单词: "${word}"。请按系统要求输出 JSON。`,
 }
 
-type E2CResult = [false, string] | [true, ExampleE2C]
+type E2CResult = [false, string] | [true, {
+	data: ExampleE2C
+	raw: DeepSeekResponseData
+}]
 
 export
 async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
@@ -71,5 +74,9 @@ async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
 		console.error(data.error)
 		return [false, '生成 e2c - 解析失败: \n' + result.choices[0].message.content]
 	}
-	return [true, data.data]
+	result.choices[0].message.content = ''
+	return [true, {
+		data: data.data,
+		raw: result,
+	}]
 }

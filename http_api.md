@@ -10,13 +10,30 @@
 | ---------- | ---------------------------- |
 | `password` | 须与环境变量 `http_password` 一致 |
 
+认证失败：
+
+- **状态码** `401`
+- **正文** `password incorrect`（纯文本）
+
+### CORS
+
+所有响应（含错误与预检）均带：
+
+| Header                         | 值                                      |
+| ------------------------------ | --------------------------------------- |
+| `Access-Control-Allow-Origin`  | `*`                                     |
+| `Access-Control-Allow-Methods` | `GET, OPTIONS, POST, DELETE, PUT`       |
+| `Access-Control-Allow-Headers` | `password, Content-Type`                |
+
+`OPTIONS` 任意路径返回 `204`（无正文）。
+
 ### 通用错误
 
-| 状态码 | 正文（纯文本）       | 说明                 |
-| ------ | -------------------- | -------------------- |
-| `401`  | `password incorrect` | 密码错误             |
-| `404`  | `noT founD`          | 未知路径或 Method 不支持 |
-| `500`  | `unknowN erroR`      | 未捕获异常，或上游 LLM 失败 |
+| 状态码 | 正文（纯文本）       | 说明                         |
+| ------ | -------------------- | ---------------------------- |
+| `401`  | `password incorrect` | 密码错误                     |
+| `404`  | `noT founD`          | 未知路径或 Method 不支持     |
+| `500`  | `unknowN erroR`      | 未捕获异常，或上游 LLM 失败  |
 
 ---
 
@@ -37,20 +54,62 @@
 
 ```json
 {
-  "word": "lash",
-  "questions": [
-    {
-      "en": "Poverty lashes at the body, but ignorance lashes at the soul.",
-      "zh": "贫穷鞭打身体，但无知鞭打灵魂。"
-    },
-    {
-      "en": "...",
-      "zh": "..."
-    },
-    {
-      "en": "...",
-      "zh": "..."
-    }
-  ]
+  "data": {
+    "word": "lash",
+    "questions": [
+      {
+        "en": "Poverty lashes at the body, but ignorance lashes at the soul.",
+        "zh": "贫穷鞭打身体，但无知鞭打灵魂。"
+      },
+      {
+        "en": "...",
+        "zh": "..."
+      },
+      {
+        "en": "...",
+        "zh": "..."
+      }
+    ]
+  },
+  "raw": {
+    "id": "...",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "content": "",
+          "reasoning_content": "..."
+        }
+      }
+    ]
+  }
 }
+```
+
+| 字段 | 类型 | 说明 |
+| ---- | ---- | ---- |
+| `data` | object | 解析后的题目 |
+| `data.word` | string | 请求的单词 |
+| `data.questions` | array | 题目列表（通常为 3 题） |
+| `data.questions[].en` | string | 包含目标单词的英文句子 |
+| `data.questions[].zh` | string | 对应中文翻译（可含意译） |
+| `raw` | object | DeepSeek 原始响应（字段可能多于下方列出的） |
+| `raw.id` | string | 请求 ID |
+| `raw.choices[].message.content` | string | 已清空为 `""`（题目见 `data`） |
+| `raw.choices[].message.reasoning_content` | string | 模型思考过程 |
+
+### 错误响应
+
+| 状态码 | 条件 | 正文 |
+| ------ | ---- | ---- |
+| `400` | 缺少 `word` 或格式无效 | `请求异常: 无效的单词 ...`（纯文本） |
+| `401` | 密码错误 | `password incorrect` |
+| `404` | 非 `GET`（如 `POST /e2c`） | `noT founD` |
+| `500` | LLM 调用/解析失败，或未知异常 | `unknowN erroR` |
+
+### 示例
+
+```bash
+curl -H "password: YOUR_PASSWORD" \
+  "http://localhost:8000/e2c?word=self-aware"
 ```

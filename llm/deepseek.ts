@@ -10,6 +10,8 @@ interface DeepSeekResponseMessage {
 	content: string
 	reasoning_content: string
 }
+
+export
 interface DeepSeekResponseData {
 	id: string
 	choices: {
