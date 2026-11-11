@@ -1,4 +1,5 @@
-import { e2c } from '../llm/e2c.ts'
+import { e2c } from '../llm/e2c/single.ts'
+import { e2c_multi } from '../llm/e2c/multi.ts'
 import { http_password } from '../env.ts'
 import { validate_word } from '../util.ts'
 
@@ -19,6 +20,11 @@ async function http_handler(req: Request): Promise<Response> {
 			case '/e2c':
 				if (req.method === 'GET')
 					return await handle_e2c(url)
+				else
+					return not_found()
+			case '/e2c-multi':
+				if (req.method === 'GET')
+					return await handle_e2c_multi(url)
 				else
 					return not_found()
 			// 404
@@ -43,6 +49,24 @@ async function handle_e2c(url: URL) {
 		model: 'deepseek-flash',
 		thinking: 'high',
 	})
+	if (ok)
+		return respond_json(result)
+
+	console.error(result)
+	return unknown_error()
+}
+
+async function handle_e2c_multi(url: URL) {
+	const words = url.searchParams.getAll('word')
+	if (words.length !== 3 || !words.every(validate_word))
+		return respond_400('需要恰好 3 个有效单词，收到: ' + JSON.stringify(words))
+	const [ok, result] = await e2c_multi(
+		[words[0], words[1], words[2]],
+		{
+			model: 'deepseek-flash',
+			thinking: 'high',
+		},
+	)
 	if (ok)
 		return respond_json(result)
 

@@ -1,6 +1,6 @@
-// deno run -A --env-file ./test/llm/e2c.ts
+// deno run -A --env-file=.env ./test/llm/e2c.ts
 
-import { e2c } from '../../llm/e2c.ts'
+import { e2c } from '../../llm/e2c/single.ts'
 
 console.log(
 	await e2c('proficient', {

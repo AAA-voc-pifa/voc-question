@@ -1,20 +1,17 @@
-// English to Chinese
+// English to Chinese — 一词三句
 
 import { z } from '@zod/zod'
-import { deepseek, type DeepSeekOpts, type DeepSeekResponseData } from './deepseek.ts'
+import { deepseek, type DeepSeekOpts } from '../deepseek.ts'
+import { parse_e2c_json, sentence_schema, type E2CResult, type E2CSentence } from './schema.ts'
 
-const question_e2c_schema = z.object({
-	en: z.string().min(1),
-	zh: z.string().min(1),
-})
-const example_e2c_schema = z.object({
+const single_schema = z.object({
 	word: z.string().min(1),
-	questions: z.array(question_e2c_schema),
+	questions: z.array(sentence_schema),
 })
 
-type ExampleE2C = z.infer<typeof example_e2c_schema>
+type E2CSingle = z.infer<typeof single_schema>
 
-const example: ExampleE2C = {
+const example: E2CSingle = {
 	word: 'lash',
 	questions: [
 		{
@@ -29,7 +26,7 @@ const example: ExampleE2C = {
 			en: 'Many hands make light work, but many tongues lash with heavy words.',
 			zh: '人多好干活，但众口以沉重的言语鞭挞。（多人合力轻而易举，多人舌语重若千钧。)',
 		}
-	]
+	] satisfies E2CSentence[],
 }
 
 const prompt = {
@@ -51,13 +48,8 @@ const prompt = {
 		`英文单词: "${word}"。请按系统要求输出 JSON。`,
 }
 
-type E2CResult = [false, string] | [true, {
-	data: ExampleE2C
-	raw: DeepSeekResponseData
-}]
-
 export
-async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
+async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult<E2CSingle>> {
 	console.log('生成 e2c...', word)
 	const [ok, result] = await deepseek([
 		{ role: 'system', content: prompt.sys },
@@ -66,17 +58,5 @@ async function e2c(word: string, ds_opts?: DeepSeekOpts): Promise<E2CResult> {
 	if (!ok)
 		return [false, '生成 e2c - 调用失败: ' + result]
 
-	const data = example_e2c_schema.safeParse(
-		JSON.parse(result.choices[0].message.content)
-	)
-	if (!data.success) {
-		console.error('生成 e2c - 解析失败:')
-		console.error(data.error)
-		return [false, '生成 e2c - 解析失败: \n' + result.choices[0].message.content]
-	}
-	result.choices[0].message.content = ''
-	return [true, {
-		data: data.data,
-		raw: result,
-	}]
+	return parse_e2c_json('e2c', result, single_schema)
 }
